@@ -8,9 +8,17 @@ import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -25,7 +33,10 @@ import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.apache.commons.io.IOCase;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
+
+import com.projekat.bezbednostDesktop.model.ImageMetadata;
 
 
 public class MainWindow extends JFrame {
@@ -49,7 +60,7 @@ public class MainWindow extends JFrame {
 		setSize(new Dimension(600, 600));
 		setMinimumSize(new Dimension(600, 600));
 		setLocationRelativeTo(null);
-		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		
 		toolbar = new JToolBar();
 		toolbar.setFloatable(false);
@@ -93,9 +104,7 @@ public class MainWindow extends JFrame {
 					panel.removeAll();
 					panel.revalidate();
 					panel.repaint();
-					
-					
-					
+
 					fileChooser.setDialogTitle("Choose picture folder");
 					fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 					fileChooser.resetChoosableFileFilters();
@@ -104,7 +113,7 @@ public class MainWindow extends JFrame {
 					List<File> filesTMP = new ArrayList<>();
 					
 					if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-						System.out.println("Folder : " + fileChooser.getSelectedFile());
+						System.out.println("Folder: " + fileChooser.getSelectedFile());
 						
 						FileFilter fileFilter = new WildcardFileFilter(new String[]{"*.JPG", "*.PNG"}, IOCase.INSENSITIVE);
 						File[] listOfFiles = fileChooser.getSelectedFile().listFiles(fileFilter);
@@ -113,12 +122,10 @@ public class MainWindow extends JFrame {
 							if(file.isFile()) {
 								System.out.println(file.getAbsolutePath());
 								try {
-									
-									BufferedImage bi = ImageIO.read(file);
-									
 									filesTMP.add(file);
-								    
-								    ImageIcon imageIcon = new ImageIcon(bi.getScaledInstance(128, 128, Image.SCALE_SMOOTH));
+									
+									BufferedImage bi = ImageIO.read(file);								    
+								    ImageIcon imageIcon = new ImageIcon(bi.getScaledInstance(128, -1, Image.SCALE_SMOOTH));
 								    JLabel imageLabel = new JLabel(imageIcon);
 								    panel.add(imageLabel);
 								    panel.revalidate();
@@ -155,7 +162,7 @@ public class MainWindow extends JFrame {
 			fileChooser.setCurrentDirectory(new java.io.File("."));
 			
 			if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-				System.out.println("getSelectedFile() : " + fileChooser.getSelectedFile());
+				System.out.println("Sertifikat: " + fileChooser.getSelectedFile());
 			}
 		}
 	}
@@ -164,6 +171,43 @@ public class MainWindow extends JFrame {
 		@Override
 		public void actionPerformed(ActionEvent event) {
 			System.out.println("sign and compress");
+			
+			try {
+				FileOutputStream fos = new FileOutputStream("compressed.zip");
+				ZipOutputStream zipOut = new ZipOutputStream(fos);
+				
+				for(File file: files) {
+					
+					// ucitavamo fajl u niz bajtova
+					FileInputStream fis = new FileInputStream(file);
+					byte[] bytes = IOUtils.toByteArray(fis);
+					fis.close();
+					
+					// racunamo hash i enkodujemo u base64
+					MessageDigest sha = MessageDigest.getInstance("SHA-256");
+					byte[] hashBytes = sha.digest(bytes);
+					String hashString = Base64.getEncoder().encodeToString(hashBytes);
+					
+					// zipujemo fajl
+		            ZipEntry zipEntry = new ZipEntry(file.getName());
+		            zipOut.putNextEntry(zipEntry);
+		            zipOut.write(bytes, 0, bytes.length);		            
+		            
+		            // grupisemo podatke koje prosledjujemo generatoru xml-a
+		            ImageMetadata im = new ImageMetadata(file.getName(), bytes.length, hashString);
+		            System.out.println(im.getName() + " " + im.getSize() + " " + im.getHash());
+				}
+				
+				
+				zipOut.close();
+		        fos.close();
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (NoSuchAlgorithmException e) {
+				e.printStackTrace();
+			}
 			
 			
 			
