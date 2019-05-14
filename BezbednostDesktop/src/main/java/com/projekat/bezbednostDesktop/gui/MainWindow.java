@@ -1,0 +1,172 @@
+package com.projekat.bezbednostDesktop.gui;
+
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Image;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JToolBar;
+import javax.swing.SwingWorker;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
+import org.apache.commons.io.IOCase;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
+
+
+public class MainWindow extends JFrame {
+	private static final long serialVersionUID = 1L;
+	
+	private JToolBar toolbar;
+	private JButton buttonBrowseFolder;
+	private JButton buttonBrowseJKS;
+	private JButton buttonSignAndCompress;
+	
+	JFileChooser fileChooser;
+	
+	private JScrollPane scroll;
+	private JPanel panel;
+	
+	private List<File> files;
+	
+	public MainWindow() {
+		
+		setTitle("Informaciona Bezbednost");
+		setSize(new Dimension(600, 600));
+		setMinimumSize(new Dimension(600, 600));
+		setLocationRelativeTo(null);
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		
+		toolbar = new JToolBar();
+		toolbar.setFloatable(false);
+		
+		buttonBrowseFolder = new JButton("Browse folder");
+		buttonBrowseJKS = new JButton("Browse JKS");
+		buttonSignAndCompress = new JButton("Sign and compress");
+		
+		fileChooser = new JFileChooser();
+		fileChooser.setAcceptAllFileFilterUsed(false);
+		
+		buttonBrowseFolder.addActionListener(new BrowseFolderActionListener());
+		buttonBrowseJKS.addActionListener(new BrowseJKSActionListener());
+		buttonSignAndCompress.addActionListener(new SignAndCompressActionListener());
+		
+		toolbar.add(buttonBrowseFolder);
+		toolbar.add(buttonBrowseJKS);
+		toolbar.add(buttonSignAndCompress);
+		
+		add(toolbar, BorderLayout.NORTH);
+		
+		panel = new JPanel(new WrapLayout(WrapLayout.LEFT));
+		scroll = new JScrollPane(panel);
+		scroll.getVerticalScrollBar().setUnitIncrement(7);
+		add(scroll, BorderLayout.CENTER);
+		
+		files = new ArrayList<File>();
+	}
+	
+	
+	// Browse folder
+	class BrowseFolderActionListener implements ActionListener{
+		@Override
+		public void actionPerformed(ActionEvent event) {
+			
+			SwingWorker<List<File>, Void> worker = new SwingWorker<List<File>, Void>() {
+				@Override
+				public List<File> doInBackground() {
+					
+					files = new ArrayList<File>();
+					panel.removeAll();
+					panel.revalidate();
+					panel.repaint();
+					
+					
+					
+					fileChooser.setDialogTitle("Choose picture folder");
+					fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+					fileChooser.resetChoosableFileFilters();
+					fileChooser.setCurrentDirectory(new java.io.File("."));
+					
+					List<File> filesTMP = new ArrayList<>();
+					
+					if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+						System.out.println("Folder : " + fileChooser.getSelectedFile());
+						
+						FileFilter fileFilter = new WildcardFileFilter(new String[]{"*.JPG", "*.PNG"}, IOCase.INSENSITIVE);
+						File[] listOfFiles = fileChooser.getSelectedFile().listFiles(fileFilter);
+						
+						for(File file: listOfFiles) {
+							if(file.isFile()) {
+								System.out.println(file.getAbsolutePath());
+								try {
+									
+									BufferedImage bi = ImageIO.read(file);
+									
+									filesTMP.add(file);
+								    
+								    ImageIcon imageIcon = new ImageIcon(bi.getScaledInstance(128, 128, Image.SCALE_SMOOTH));
+								    JLabel imageLabel = new JLabel(imageIcon);
+								    panel.add(imageLabel);
+								    panel.revalidate();
+								    
+								} catch (IOException e) {
+									e.printStackTrace();
+								}
+							}
+						}
+					}
+					return filesTMP;
+				}
+				@Override
+				public void done() {
+					try {
+						files = get();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			};
+			worker.execute();
+		}
+	}
+	
+	class BrowseJKSActionListener implements ActionListener{
+		@Override
+		public void actionPerformed(ActionEvent event) {
+			
+			fileChooser.setDialogTitle("Choose picture folder");
+			fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+			fileChooser.resetChoosableFileFilters();
+			fileChooser.setFileFilter(new FileNameExtensionFilter("Java key store files", "jks"));
+			fileChooser.setCurrentDirectory(new java.io.File("."));
+			
+			if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+				System.out.println("getSelectedFile() : " + fileChooser.getSelectedFile());
+			}
+		}
+	}
+	
+	class SignAndCompressActionListener implements ActionListener{
+		@Override
+		public void actionPerformed(ActionEvent event) {
+			System.out.println("sign and compress");
+			
+			
+			
+		}
+	}
+}
