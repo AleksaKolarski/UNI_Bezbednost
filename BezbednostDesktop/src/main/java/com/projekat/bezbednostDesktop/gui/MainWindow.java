@@ -6,6 +6,7 @@ import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
@@ -36,6 +37,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -251,10 +253,14 @@ public class MainWindow extends JFrame {
 				TransformerFactory transformerFactory = TransformerFactory.newInstance();
 				Transformer transformer = transformerFactory.newTransformer();
 				DOMSource source = new DOMSource(doc);
-				StreamResult result = new StreamResult(new FileOutputStream("test.xml"));
+				//StreamResult result = new StreamResult(new FileOutputStream("test.xml")); // ako ocemo xml da ispisemo na disk a ne u zip direktno
+				ByteArrayOutputStream bo = new ByteArrayOutputStream();
+				StreamResult result = new StreamResult(bo);
+				transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+				transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 				transformer.transform(source, result);
 				
-				byte[] xmlBytes = IOUtils.toByteArray(new FileInputStream("test.xml"));
+				byte[] xmlBytes = bo.toByteArray();
 				zipOut.putNextEntry(new ZipEntry("contents.xml"));
 				zipOut.write(xmlBytes, 0, xmlBytes.length);
 				
