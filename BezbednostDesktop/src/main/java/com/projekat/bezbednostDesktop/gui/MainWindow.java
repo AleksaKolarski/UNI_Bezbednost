@@ -14,8 +14,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Date;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -31,10 +33,22 @@ import javax.swing.JScrollPane;
 import javax.swing.JToolBar;
 import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.io.IOCase;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
+import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import com.projekat.bezbednostDesktop.model.ImageMetadata;
 
@@ -124,7 +138,7 @@ public class MainWindow extends JFrame {
 								try {
 									filesTMP.add(file);
 									
-									BufferedImage bi = ImageIO.read(file);								    
+									BufferedImage bi = ImageIO.read(file);
 								    ImageIcon imageIcon = new ImageIcon(bi.getScaledInstance(128, -1, Image.SCALE_SMOOTH));
 								    JLabel imageLabel = new JLabel(imageIcon);
 								    panel.add(imageLabel);
@@ -176,6 +190,28 @@ public class MainWindow extends JFrame {
 				FileOutputStream fos = new FileOutputStream("compressed.zip");
 				ZipOutputStream zipOut = new ZipOutputStream(fos);
 				
+				DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+				DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+				Document doc = dBuilder.newDocument();
+				         
+				// root element
+				Element rootElement = doc.createElement("RootElement");
+				doc.appendChild(rootElement);
+				
+				// username element
+				Element usernameElement = doc.createElement("username");
+				rootElement.appendChild(usernameElement);
+				usernameElement.appendChild(doc.createTextNode("test username"));
+				
+				// images element
+				Element imagesElement = doc.createElement("images");
+				rootElement.appendChild(imagesElement);
+				
+				// date element
+				Element dateElement = doc.createElement("date");
+				rootElement.appendChild(dateElement);
+				dateElement.appendChild(doc.createTextNode(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())));
+				
 				for(File file: files) {
 					
 					// ucitavamo fajl u niz bajtova
@@ -196,8 +232,31 @@ public class MainWindow extends JFrame {
 		            // grupisemo podatke koje prosledjujemo generatoru xml-a
 		            ImageMetadata im = new ImageMetadata(file.getName(), bytes.length, hashString);
 		            System.out.println(im.getName() + " " + im.getSize() + " " + im.getHash());
+		            
+		            // image element
+		            Element imageElement = doc.createElement("image");
+		            imagesElement.appendChild(imageElement);
+		            Attr imageNameAttr = doc.createAttribute("name");
+		            imageNameAttr.setValue(im.getName());
+		            imageElement.setAttributeNode(imageNameAttr);
+		            Attr imageSizeAttr = doc.createAttribute("size");
+		            imageSizeAttr.setValue(im.getSize().toString());
+		            imageElement.setAttributeNode(imageSizeAttr);
+		            Attr imageHashAttr = doc.createAttribute("hash");
+		            imageHashAttr.setValue(im.getHash());
+		            imageElement.setAttributeNode(imageHashAttr);
 				}
 				
+				// write the content into xml file
+				TransformerFactory transformerFactory = TransformerFactory.newInstance();
+				Transformer transformer = transformerFactory.newTransformer();
+				DOMSource source = new DOMSource(doc);
+				StreamResult result = new StreamResult(new FileOutputStream("test.xml"));
+				transformer.transform(source, result);
+				
+				byte[] xmlBytes = IOUtils.toByteArray(new FileInputStream("test.xml"));
+				zipOut.putNextEntry(new ZipEntry("contents.xml"));
+				zipOut.write(xmlBytes, 0, xmlBytes.length);
 				
 				zipOut.close();
 		        fos.close();
@@ -207,10 +266,13 @@ public class MainWindow extends JFrame {
 				e.printStackTrace();
 			} catch (NoSuchAlgorithmException e) {
 				e.printStackTrace();
+			} catch (TransformerConfigurationException e) {
+				e.printStackTrace();
+			} catch (TransformerException e) {
+				e.printStackTrace();
+			} catch (ParserConfigurationException e) {
+				e.printStackTrace();
 			}
-			
-			
-			
 		}
 	}
 }
