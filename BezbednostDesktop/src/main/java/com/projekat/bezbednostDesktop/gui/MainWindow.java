@@ -10,11 +10,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -36,11 +34,8 @@ import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
@@ -127,7 +122,6 @@ public class MainWindow extends JFrame {
 					fileChooser.setCurrentDirectory(new java.io.File("."));
 					
 					List<File> filesTMP = new ArrayList<>();
-					
 					if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
 						System.out.println("Folder: " + fileChooser.getSelectedFile());
 						
@@ -145,7 +139,6 @@ public class MainWindow extends JFrame {
 								    JLabel imageLabel = new JLabel(imageIcon);
 								    panel.add(imageLabel);
 								    panel.revalidate();
-								    
 								} catch (IOException e) {
 									e.printStackTrace();
 								}
@@ -266,17 +259,7 @@ public class MainWindow extends JFrame {
 				
 				zipOut.close();
 		        fos.close();
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			} catch (NoSuchAlgorithmException e) {
-				e.printStackTrace();
-			} catch (TransformerConfigurationException e) {
-				e.printStackTrace();
-			} catch (TransformerException e) {
-				e.printStackTrace();
-			} catch (ParserConfigurationException e) {
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
