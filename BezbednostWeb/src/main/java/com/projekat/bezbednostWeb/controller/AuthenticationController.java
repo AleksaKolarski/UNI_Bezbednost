@@ -4,21 +4,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.projekat.bezbednostWeb.entity.User;
-import com.projekat.bezbednostWeb.security.CustomUserDetailsService;
 import com.projekat.bezbednostWeb.security.TokenHelper;
 
 @RestController
@@ -30,9 +26,6 @@ public class AuthenticationController {
 
 	@Autowired
 	private AuthenticationManager authenticationManager;
-
-	@Autowired
-	private CustomUserDetailsService userDetailsService;
 
 
 	@PostMapping(value = "/login", produces = MediaType.TEXT_PLAIN_VALUE)
@@ -52,17 +45,5 @@ public class AuthenticationController {
 
 		// Vrati token kao odgovor na uspesno autentifikaciju
 		return new ResponseEntity<String>(jws, HttpStatus.OK);
-	}
-
-	@RequestMapping(value = "/change-password", method = RequestMethod.POST)
-	@PreAuthorize("hasRole('USER')")
-	public ResponseEntity<?> changePassword(@RequestBody PasswordChanger passwordChanger) {
-		userDetailsService.changePassword(passwordChanger.oldPassword, passwordChanger.newPassword);
-		return new ResponseEntity<>(HttpStatus.OK);
-	}
-
-	static class PasswordChanger {
-		public String oldPassword;
-		public String newPassword;
 	}
 }
