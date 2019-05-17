@@ -36,14 +36,14 @@ public class AuthenticationController {
 
 
 	@PostMapping(value = "/login", produces = MediaType.TEXT_PLAIN_VALUE)
-	public ResponseEntity<String> createAuthenticationToken(@RequestParam("username") String username, @RequestParam("password") String password) {
+	public ResponseEntity<String> createAuthenticationToken(@RequestParam("email") String email, @RequestParam("password") String password) {
 		Authentication authentication;
 		try {
-			authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
+			authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
 		} catch (AuthenticationException e) {
-			return new ResponseEntity<String>("Wrong username/password.", HttpStatus.FORBIDDEN);
+			return new ResponseEntity<String>("Wrong email/password.", HttpStatus.FORBIDDEN);
 		}
-		// Ubaci username + password u kontext
+		// Ubaci email + password u kontext
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
 		// Kreiraj token

@@ -92,6 +92,8 @@ public class UserController {
 		user.setEmail(email);
 		user.setPassword(bCryptPasswordEncoder.encode(password));
 		System.out.println(user.getPassword());
+		user.setActive(false);
+		user.setCertificate("cert");
 		Set<Role> roles = new HashSet<Role>();
 		roles.add(roleService.findByName("ROLE_REGULAR"));
 		user.setRoles(roles);
@@ -106,126 +108,34 @@ public class UserController {
 	}
 	
 	// Activate
-	@RequestMapping(value = "/activate")
+	@RequestMapping(value = "/activate", method = RequestMethod.POST)
 	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<UserDTO> activate(@RequestParam("userId") Integer id){
+	public ResponseEntity<UserDTO> activate(@RequestParam("userId") Integer userId){
 		
-		return null;
+		User user = userService.findById(userId);
+		if(user == null) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+		
+		user.setActive(true);
+		userService.save(user);
+		
+		return new ResponseEntity<>(new UserDTO(user), HttpStatus.OK);
 	}
 	
 	// Deactivate
-	@RequestMapping(value = "/deactivate")
+	@RequestMapping(value = "/deactivate", method = RequestMethod.POST)
 	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<UserDTO> deactivate(@RequestParam("userId") Integer id){
+	public ResponseEntity<UserDTO> deactivate(@RequestParam("userId") Integer userId){
 		
-		return null;
+		User user = userService.findById(userId);
+		if(user == null) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+		
+		user.setActive(false);
+		userService.save(user);
+		
+		return new ResponseEntity<>(new UserDTO(user), HttpStatus.OK);
 	}
-	
-	// Nije u zahtevu projekta
-	/*
-	@RequestMapping(value = "/edit", method = RequestMethod.PUT, consumes = MediaType.APPLICATION_JSON_VALUE)
-	@PreAuthorize("hasRole('USER')")
-	public ResponseEntity<UserDTO> edit(@RequestBody UserDTO userDTO){
-		User currentUser = util.getCurrentUser();
-		if(currentUser == null) {
-			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-		}
-		
-		if(userDTO.getId() != currentUser.getId() && !currentUser.checkRole("ROLE_ADMIN")) {
-			// menja tudji profil a nije admin
-			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-		}
-		
-		String firstname = userDTO.getFirstname();
-		String lastname = userDTO.getLastname();
-		String username = userDTO.getUsername();
-		boolean isAdmin = userDTO.getIsAdmin();
-		
-		if(firstname == null || firstname.length() < 5 || firstname.length() > 30) {
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-		}
-		if(lastname == null || lastname.length() < 5 || lastname.length() > 30) {
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-		}
-		if(username == null || username.length() < 5 || username.length() > 10) {
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-		}
-		
-		User editUser = userService.findById(userDTO.getId());
-		
-		if(editUser == null) {
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-		}
-		
-		editUser.setFirstname(firstname);
-		editUser.setLastname(lastname);
-		editUser.setUsername(username);
-		if(isAdmin == true) {
-			editUser.getRoles().add(roleService.findByName("ROLE_ADMIN"));
-		}
-		else {
-			editUser.getRoles().remove(roleService.findByName("ROLE_ADMIN"));
-		}
-		
-		editUser = userService.save(editUser);
-		
-		if(editUser == null) {
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-		}
-		
-		return new ResponseEntity<>(new UserDTO(editUser), HttpStatus.OK);
-	}
-	*/
-	
-	// Nije u zahtevu projekta
-	/*
-	@RequestMapping(value = "/delete", method = RequestMethod.DELETE)
-	@PreAuthorize("hasRole('USER')")
-	public ResponseEntity<String> delete(@RequestParam("userId") Integer userId){
-		User currentUser = util.getCurrentUser();
-		if(currentUser == null) {
-			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-		}		
-		
-		if(userId != currentUser.getId() && !currentUser.checkRole("ROLE_ADMIN")) {
-			// brise tudji profil a nije admin
-			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-		}
-		
-		User removeUser = userService.findById(userId);
-		
-		if(removeUser == null) {
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-		}
-		
-		userService.remove(removeUser);
-		
-		return new ResponseEntity<>(HttpStatus.OK);
-	}
-	*/
-	
-	// Nije u zahtevu projekta
-	/*
-	@RequestMapping(value = "/change-password", method = RequestMethod.PUT)
-	@PreAuthorize("hasRole('USER')")
-	public ResponseEntity<String> change_password(@RequestParam("userId") Integer userId, @RequestParam("password") String password){
-		User userEdit = userService.findById(userId);
-		if(userEdit == null) {
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-		}
-		
-		User currentUser = util.getCurrentUser();
-		if(currentUser == null) {
-			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-		}
-		
-		if(userEdit.getId() != currentUser.getId() && currentUser.getIsAdmin() == false) {
-			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-		}
-		
-		userEdit.setPassword(bCryptPasswordEncoder.encode(password));
-		userService.save(userEdit);
-		return new ResponseEntity<>(HttpStatus.OK);
-	}
-	*/
 }

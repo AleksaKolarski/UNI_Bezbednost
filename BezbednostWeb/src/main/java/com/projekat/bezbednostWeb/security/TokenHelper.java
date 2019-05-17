@@ -12,7 +12,7 @@ import javax.servlet.http.HttpServletRequest;
 @Component
 public class TokenHelper {
 
-	@Value("dokumenti2018")
+	@Value("bezbednostWeb")
 	private String APP_NAME;
 
 	@Value("somesecret")

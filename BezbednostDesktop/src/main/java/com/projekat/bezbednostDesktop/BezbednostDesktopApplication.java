@@ -2,7 +2,7 @@ package com.projekat.bezbednostDesktop;
 
 import com.projekat.bezbednostDesktop.gui.MainWindow;
 
-public class App 
+public class BezbednostDesktopApplication 
 {
     public static void main( String[] args )
     {

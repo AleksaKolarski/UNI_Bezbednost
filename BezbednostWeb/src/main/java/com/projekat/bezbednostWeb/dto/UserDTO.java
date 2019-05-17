@@ -3,13 +3,18 @@ package com.projekat.bezbednostWeb.dto;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import com.projekat.bezbednostWeb.entity.User;
 
 public class UserDTO {
 
 	private Integer id;
 	private String email;
+	
+	@JsonProperty(access = Access.WRITE_ONLY)
 	private String password;
+	
 	//private String certificate;
 	private Boolean active;
 	private Boolean admin;
