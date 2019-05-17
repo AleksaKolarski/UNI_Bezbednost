@@ -31,9 +31,11 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByEmail(email);
         if (user == null) {
         	return null;
-        } else {
-            return user;
         }
+        if (user.isEnabled() == false) {
+        	return null;
+        }
+        return user;
     }
 
     public boolean changePassword(String oldPassword, String newPassword) {
