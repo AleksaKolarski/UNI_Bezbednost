@@ -68,7 +68,8 @@ public class UserController {
 	public ResponseEntity<List<UserDTO>> getAllUsers(){
 		return new ResponseEntity<>(UserDTO.parseList(userService.findAll()), HttpStatus.OK);
 	}
-
+	
+	// register
 	@RequestMapping(value = "/register", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<UserDTO> register(@RequestBody UserDTO userDTO) {
 		if(userDTO == null) {

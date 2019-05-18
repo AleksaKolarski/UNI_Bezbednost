@@ -1,4 +1,4 @@
-package com.projekat.bezbednostWeb.config;
+package com.projekat.bezbednostWeb.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -15,11 +15,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
-
-import com.projekat.bezbednostWeb.security.CustomUserDetailsService;
-import com.projekat.bezbednostWeb.security.RestAuthenticationEntryPoint;
-import com.projekat.bezbednostWeb.security.TokenAuthenticationFilter;
-import com.projekat.bezbednostWeb.security.TokenHelper;
 
 @Configuration
 @EnableWebSecurity
