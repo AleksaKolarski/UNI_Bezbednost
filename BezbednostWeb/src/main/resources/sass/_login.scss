@@ -1,0 +1,26 @@
+@mixin login{
+
+  #id-body-login{
+
+    #id-header{
+      text-align: center;
+    }
+
+    .class-input-group{
+      margin: 5px 0px 10px 0px;
+
+      .class-input-group-title{
+        margin: 0px 0px 5px 0px;
+      }
+
+      .class-input-group-input{
+        box-sizing: border-box;
+        width: 100%;
+      }
+    }
+
+    #id-button-login{
+      float: right;
+    }
+  }
+}
