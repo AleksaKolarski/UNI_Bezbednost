@@ -70,14 +70,8 @@ public class UserController {
 	}
 	
 	// register
-	@RequestMapping(value = "/register", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<UserDTO> register(@RequestBody UserDTO userDTO) {
-		if(userDTO == null) {
-			return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-		}
-				
-		String email = userDTO.getEmail();
-		String password = userDTO.getPassword();
+	@RequestMapping(value = "/register", method = RequestMethod.POST)
+	public ResponseEntity<UserDTO> register(@RequestParam("email") String email, @RequestParam("password") String password) {
 		
 		if(email == null || email.length() < 5 || email.length() > 30) {
 			return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);

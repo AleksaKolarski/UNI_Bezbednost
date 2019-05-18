@@ -128,10 +128,20 @@ function check_password_match(field1, field2) {
 
 // ... plus min & max length
 function check_password_match(field1, field2, min, max) {
-    var content_length = field1.val().length;
-    if (field1.val() == field2.val() && content_length >= min && content_length <= max) {
-        field2.css('border', '');
-        return true;
+    
+    if (field1.val() == field2.val()) {
+
+        if(min != undefined && max != undefined){
+            var content_length = field1.val().length;
+            if(content_length >= min && content_length <= max){
+                field2.css('border', '');
+                return true;
+            }
+        }
+        else{
+            field2.css('border', '');
+            return true;
+        }
     }
     field2.css('border', '2px solid #f00');
     return false;

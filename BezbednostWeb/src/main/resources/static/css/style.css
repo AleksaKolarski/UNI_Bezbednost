@@ -11,7 +11,32 @@
   box-sizing: border-box;
   width: 100%;
 }
+#id-body-login #id-link-register {
+  color: #0000ee;
+  text-decoration: none;
+}
 #id-body-login #id-button-login {
+  float: right;
+}
+
+#id-body-register #id-header {
+  text-align: center;
+}
+#id-body-register .class-input-group {
+  margin: 5px 0px 10px 0px;
+}
+#id-body-register .class-input-group .class-input-group-title {
+  margin: 0px 0px 5px 0px;
+}
+#id-body-register .class-input-group .class-input-group-input {
+  box-sizing: border-box;
+  width: 100%;
+}
+#id-body-register #id-link-login {
+  color: #0000ee;
+  text-decoration: none;
+}
+#id-body-register #id-button-register {
   float: right;
 }
 

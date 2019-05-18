@@ -13,11 +13,12 @@ $(document).ready(function(e){
   add_validation_text(input_password, 5, 999);
 
   button_login.on('click', function(e){
-    var email = input_email.val();
-    var password = input_password.val();
-
     if(check_email(input_email, 30)){
       if(check_text(input_password, 5, 999)){
+
+        var email = input_email.val();
+        var password = input_password.val();
+
         customAjax({
           method: 'POST',
           url: 'auth/login',
