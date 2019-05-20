@@ -4,6 +4,8 @@ var input_password;
 var button_login;
 
 $(document).ready(function(e){
+
+  localStorage.removeItem('jwt');
   
   input_email = $('#id-input-email');
   input_password = $('#id-input-password');
@@ -21,7 +23,7 @@ $(document).ready(function(e){
 
         customAjax({
           method: 'POST',
-          url: 'auth/login',
+          url: '/auth/login',
           data: { 'email': email, 'password': password },
           success: function(jwt, status, xhr){
             if(xhr.status == 200){

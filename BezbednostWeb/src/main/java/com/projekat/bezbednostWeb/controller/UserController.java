@@ -85,9 +85,8 @@ public class UserController {
 		User user = new User();
 		user.setEmail(email);
 		user.setPassword(bCryptPasswordEncoder.encode(password));
-		System.out.println(user.getPassword());
 		user.setActive(false);
-		user.setCertificate("cert");
+		user.setCertificate("cert" + email);
 		Set<Role> roles = new HashSet<Role>();
 		roles.add(roleService.findByName("ROLE_REGULAR"));
 		user.setRoles(roles);
@@ -113,6 +112,30 @@ public class UserController {
 		
 		user.setActive(active);
 		userService.save(user);
+		
+		return new ResponseEntity<>(new UserDTO(user), HttpStatus.OK);
+	}
+	
+	// Set admin
+	@RequestMapping(value = "/setAdmin", method = RequestMethod.POST)
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<UserDTO> setAdmin(@RequestParam("userId") Integer userId, @RequestParam("admin") Boolean admin){
+		
+		User user = userService.findById(userId);
+		if(user == null) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+		
+		if(admin == true && user.getIsAdmin() == false) {
+			Role roleAdmin = roleService.findByName("ROLE_ADMIN");
+			user.getRoles().add(roleAdmin);
+			user = userService.save(user);
+		}
+		if(admin == false && user.getIsAdmin() == true) {
+			Role roleAdmin = roleService.findByName("ROLE_ADMIN");
+			user.getRoles().remove(roleAdmin);
+			user = userService.save(user);
+		}
 		
 		return new ResponseEntity<>(new UserDTO(user), HttpStatus.OK);
 	}

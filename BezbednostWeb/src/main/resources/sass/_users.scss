@@ -1,0 +1,28 @@
+@mixin users{
+  #id-body-users{
+
+    #id-header{
+      text-align: center;
+    }
+
+    #id-table-users{
+      margin: auto;
+      border-collapse: collapse;
+
+      #id-tr-header{
+        th{
+          padding-left: 7px;
+          padding-right: 7px;
+        }
+      }
+
+      .class-tr-user{
+        td{
+          border: 1px solid black;
+          padding-left: 7px;
+          padding-right: 7px;
+        }
+      }
+    }
+  }
+}

@@ -61,6 +61,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 	.antMatchers("/user/register").permitAll()
                 	.antMatchers("/file/download/*").permitAll()
                 	.antMatchers("/search/**").permitAll()
+                	.antMatchers("/users.html").hasRole("ADMIN")
                 	//svaki zahtev mora biti autorizovan
                 	.anyRequest().authenticated().and()
                 //presretni svaki zahtev filterom

@@ -40,4 +40,21 @@
   float: right;
 }
 
+#id-body-users #id-header {
+  text-align: center;
+}
+#id-body-users #id-table-users {
+  margin: auto;
+  border-collapse: collapse;
+}
+#id-body-users #id-table-users #id-tr-header th {
+  padding-left: 7px;
+  padding-right: 7px;
+}
+#id-body-users #id-table-users .class-tr-user td {
+  border: 1px solid black;
+  padding-left: 7px;
+  padding-right: 7px;
+}
+
 /*# sourceMappingURL=style.css.map */

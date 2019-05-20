@@ -19,11 +19,11 @@ $(document).ready(function(e){
       if(check_password_match(input_password1, input_password2)){
 
         var email = input_email.val();
-        var password = input.input_password1.val();
+        var password = input_password1.val();
 
         customAjax({
           method: 'POST',
-          url: 'user/register',
+          url: '/user/register',
           data: { 'email': email, 'password': password },
           success: function(data, status, xhr){
             
