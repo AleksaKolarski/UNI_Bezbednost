@@ -101,33 +101,17 @@ public class UserController {
 		return new ResponseEntity<UserDTO>(new UserDTO(user), HttpStatus.CREATED);
 	}
 	
-	// Activate
-	@RequestMapping(value = "/activate", method = RequestMethod.POST)
+	// Set active
+	@RequestMapping(value = "/setActive", method = RequestMethod.POST)
 	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<UserDTO> activate(@RequestParam("userId") Integer userId){
+	public ResponseEntity<UserDTO> setActive(@RequestParam("userId") Integer userId, @RequestParam("active") Boolean active){
 		
 		User user = userService.findById(userId);
 		if(user == null) {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 		
-		user.setActive(true);
-		userService.save(user);
-		
-		return new ResponseEntity<>(new UserDTO(user), HttpStatus.OK);
-	}
-	
-	// Deactivate
-	@RequestMapping(value = "/deactivate", method = RequestMethod.POST)
-	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<UserDTO> deactivate(@RequestParam("userId") Integer userId){
-		
-		User user = userService.findById(userId);
-		if(user == null) {
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-		}
-		
-		user.setActive(false);
+		user.setActive(active);
 		userService.save(user);
 		
 		return new ResponseEntity<>(new UserDTO(user), HttpStatus.OK);
