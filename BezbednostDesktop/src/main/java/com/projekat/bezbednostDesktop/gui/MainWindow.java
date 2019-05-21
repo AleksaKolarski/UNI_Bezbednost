@@ -47,8 +47,6 @@ import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import com.projekat.bezbednostDesktop.model.ImageMetadata;
-
 
 public class MainWindow extends JFrame {
 	private static final long serialVersionUID = 1L;
@@ -222,23 +220,19 @@ public class MainWindow extends JFrame {
 					// zipujemo fajl
 		            ZipEntry zipEntry = new ZipEntry(file.getName());
 		            zipOut.putNextEntry(zipEntry);
-		            zipOut.write(bytes, 0, bytes.length);		            
-		            
-		            // grupisemo podatke koje prosledjujemo generatoru xml-a
-		            ImageMetadata im = new ImageMetadata(file.getName(), bytes.length, hashString);
-		            System.out.println(im.getName() + " " + im.getSize() + " " + im.getHash());
+		            zipOut.write(bytes, 0, bytes.length);
 		            
 		            // image element
 		            Element imageElement = doc.createElement("image");
 		            imagesElement.appendChild(imageElement);
 		            Attr imageNameAttr = doc.createAttribute("name");
-		            imageNameAttr.setValue(im.getName());
+		            imageNameAttr.setValue(file.getName());
 		            imageElement.setAttributeNode(imageNameAttr);
 		            Attr imageSizeAttr = doc.createAttribute("size");
-		            imageSizeAttr.setValue(im.getSize().toString());
+		            imageSizeAttr.setValue(((Integer) bytes.length).toString());
 		            imageElement.setAttributeNode(imageSizeAttr);
 		            Attr imageHashAttr = doc.createAttribute("hash");
-		            imageHashAttr.setValue(im.getHash());
+		            imageHashAttr.setValue(hashString);
 		            imageElement.setAttributeNode(imageHashAttr);
 				}
 				
