@@ -20,7 +20,6 @@ function fill_table(){
       html = '<tr id="id-tr-header">' + 
                 '<th>ID</th>' + 
                 '<th>Email</th>' + 
-                '<th>Certificate</th>' +  
               '</tr>';
       table_users.append(html);
       users.forEach(user => {
@@ -50,9 +49,6 @@ function fill_table(){
           });
         });
       });
-    },
-    error: function(xhr, status, error){
-
     }
   });
 }

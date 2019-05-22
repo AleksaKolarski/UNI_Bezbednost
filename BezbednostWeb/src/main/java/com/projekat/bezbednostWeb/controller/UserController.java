@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.projekat.bezbednostWeb.certificate.JKS;
 import com.projekat.bezbednostWeb.dto.UserDTO;
 import com.projekat.bezbednostWeb.entity.Role;
 import com.projekat.bezbednostWeb.entity.User;
@@ -35,6 +36,9 @@ public class UserController {
 	
 	@Autowired
 	private BCryptPasswordEncoder bCryptPasswordEncoder;
+	
+	@Autowired
+	private JKS jks;
 	
 	
 	@GetMapping("/currentUser")
@@ -86,7 +90,7 @@ public class UserController {
 		user.setEmail(email);
 		user.setPassword(bCryptPasswordEncoder.encode(password));
 		user.setActive(false);
-		user.setCertificate("cert" + email);
+		user.setCertificate(email + ".jks");
 		Set<Role> roles = new HashSet<Role>();
 		roles.add(roleService.findByName("ROLE_REGULAR"));
 		user.setRoles(roles);
@@ -96,6 +100,9 @@ public class UserController {
 		if(user == null) {
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
+		
+		// Generate certificate		
+		jks.generateSignedJKS(user.getId(), email, password);
 		
 		return new ResponseEntity<UserDTO>(new UserDTO(user), HttpStatus.CREATED);
 	}
