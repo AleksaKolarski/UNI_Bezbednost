@@ -6,13 +6,19 @@ import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.security.KeyStore;
 import java.security.MessageDigest;
+import java.security.PrivateKey;
+import java.security.Security;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -34,7 +40,6 @@ import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -43,9 +48,18 @@ import javax.xml.transform.stream.StreamResult;
 import org.apache.commons.io.IOCase;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
+import org.apache.xml.security.exceptions.XMLSecurityException;
+import org.apache.xml.security.keys.KeyInfo;
+import org.apache.xml.security.keys.keyresolver.implementations.RSAKeyValueResolver;
+import org.apache.xml.security.keys.keyresolver.implementations.X509CertificateResolver;
+import org.apache.xml.security.signature.XMLSignature;
+import org.apache.xml.security.transforms.Transforms;
+import org.apache.xml.security.utils.Constants;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 
 public class MainWindow extends JFrame {
@@ -62,6 +76,16 @@ public class MainWindow extends JFrame {
 	private JPanel panel;
 	
 	private List<File> files;
+	
+	private String jksFilePath;
+	
+	public String email;
+	public String password;
+	
+	static {
+		Security.addProvider(new BouncyCastleProvider());
+		org.apache.xml.security.Init.init();
+	}
 	
 	public MainWindow() {
 		
@@ -158,6 +182,7 @@ public class MainWindow extends JFrame {
 		}
 	}
 	
+	// Browse certificate
 	class BrowseJKSActionListener implements ActionListener{
 		@Override
 		public void actionPerformed(ActionEvent event) {
@@ -170,10 +195,15 @@ public class MainWindow extends JFrame {
 			
 			if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
 				System.out.println("Sertifikat: " + fileChooser.getSelectedFile());
+				jksFilePath = fileChooser.getSelectedFile().getPath();
+				
+				LoginWindow loginWindow = new LoginWindow(MainWindow.this);
+				loginWindow.setVisible(true);
 			}
 		}
 	}
 	
+	// Sign and compress
 	class SignAndCompressActionListener implements ActionListener{
 		@Override
 		public void actionPerformed(ActionEvent event) {
@@ -236,6 +266,18 @@ public class MainWindow extends JFrame {
 		            imageElement.setAttributeNode(imageHashAttr);
 				}
 				
+				
+				// Sign xml document
+				KeyStore keyStore = KeyStore.getInstance("JKS", "SUN");
+				BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(jksFilePath));
+				keyStore.load(inputStream, password.toCharArray());
+				PrivateKey privateKey = (PrivateKey) keyStore.getKey(email, password.toCharArray());
+				Certificate certificate = keyStore.getCertificate(email);
+				
+				doc = signDocument(doc, privateKey, certificate);
+				
+				System.out.println("Signed document verification: " + verifyDocument(doc));
+				
 				// write the content into xml file
 				TransformerFactory transformerFactory = TransformerFactory.newInstance();
 				Transformer transformer = transformerFactory.newTransformer();
@@ -243,8 +285,11 @@ public class MainWindow extends JFrame {
 				//StreamResult result = new StreamResult(new FileOutputStream("test.xml")); // ako ocemo xml da ispisemo na disk a ne u zip direktno
 				ByteArrayOutputStream bo = new ByteArrayOutputStream();
 				StreamResult result = new StreamResult(bo);
-				transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-				transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+				
+				// pokvari se verifikacija zbog ovoga jer se potpise pre uvlacenja redova
+				//transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+				//transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+				
 				transformer.transform(source, result);
 				
 				byte[] xmlBytes = bo.toByteArray();
@@ -256,6 +301,72 @@ public class MainWindow extends JFrame {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+		}
+	}
+	
+	private Document signDocument(Document doc, PrivateKey privateKey, Certificate certificate) {
+		try {
+			Element rootElement = doc.getDocumentElement();
+				
+			XMLSignature xmlSignature;
+			xmlSignature = new XMLSignature(doc, null, XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1);
+			Transforms transforms = new Transforms(doc);
+			transforms.addTransform(Transforms.TRANSFORM_ENVELOPED_SIGNATURE);
+			transforms.addTransform(Transforms.TRANSFORM_C14N_WITH_COMMENTS);
+				
+			xmlSignature.addDocument("", transforms, Constants.ALGO_ID_DIGEST_SHA1);
+			xmlSignature.addKeyInfo(certificate.getPublicKey());
+			xmlSignature.addKeyInfo((X509Certificate) certificate);
+				
+			rootElement.appendChild(xmlSignature.getElement());
+				
+			xmlSignature.sign(privateKey);
+			return doc;
+		} catch (XMLSecurityException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	private boolean verifyDocument(Document doc) {
+		try {
+			//Pronalazi se prvi Signature element 
+			NodeList signatures = doc.getElementsByTagNameNS("http://www.w3.org/2000/09/xmldsig#", "Signature");
+			Element signatureEl = (Element) signatures.item(0);
+			
+			//kreira se signature objekat od elementa
+			XMLSignature signature = new XMLSignature(signatureEl, null);
+			
+			//preuzima se key info
+			KeyInfo keyInfo = signature.getKeyInfo();
+			
+			//ako postoji
+			if(keyInfo != null) {
+				//registruju se resolver-i za javni kljuc i sertifikat
+				keyInfo.registerInternalKeyResolver(new RSAKeyValueResolver());
+			    keyInfo.registerInternalKeyResolver(new X509CertificateResolver());
+			    
+			    //ako sadrzi sertifikat
+			    if(keyInfo.containsX509Data() && keyInfo.itemX509Data(0).containsCertificate()) { 
+			        Certificate cert = keyInfo.itemX509Data(0).itemCertificate(0).getX509Certificate();
+			        
+			        //ako postoji sertifikat, provera potpisa
+			        if(cert != null) 
+			        	return signature.checkSignatureValue((X509Certificate) cert);
+			        else {
+			        	return false;
+			        }
+			    }
+			    else {
+		        	return false;
+		        }
+			}
+			else {
+	        	return false;
+	        }
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
 		}
 	}
 }

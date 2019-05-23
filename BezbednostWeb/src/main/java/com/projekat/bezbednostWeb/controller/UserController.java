@@ -6,7 +6,6 @@ import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -45,22 +44,6 @@ public class UserController {
 	public ResponseEntity<UserDTO> getCurrentUser() {
 		User user = userService.getCurrentUser();
 		if (user == null) {
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-		}
-		return new ResponseEntity<>(new UserDTO(user), HttpStatus.OK);
-	}
-	
-	@RequestMapping(value = "/getById", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-	@PreAuthorize("hasRole('USER')")
-	public ResponseEntity<UserDTO> getById(@RequestParam("userId") Integer userId) {
-		
-		User currentUser = userService.getCurrentUser();
-		if(currentUser.getIsAdmin() == false && currentUser.getId() != userId) {
-			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-		}
-		
-		User user = userService.findById(userId);
-		if(user == null) {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 		return new ResponseEntity<>(new UserDTO(user), HttpStatus.OK);

@@ -14,7 +14,23 @@ $(document).ready(function(e){
 });
 
 function upload_images(){
-  
+	var file = button_browse_images.prop('files')[0];
+	if(file == undefined){
+		return;
+	}
+	var data = new FormData();
+	data.append('file', file);
+	customAjax({
+		method: 'POST', 
+		url: '/image/upload/', 
+		data: data, 
+		cache: false, 
+		contentType: false, 
+		processData: false,
+		success: function(data, status, xhr){
+
+		}
+	});
 }
 
 function certificate_download(){
