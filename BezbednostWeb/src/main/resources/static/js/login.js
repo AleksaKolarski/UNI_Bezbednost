@@ -28,7 +28,7 @@ $(document).ready(function(e){
           success: function(jwt, status, xhr){
             if(xhr.status == 200){
               localStorage.setItem('jwt', jwt);
-              window.location.href = "/index.html";
+              window.location.href = '/index.html';
             }
           },
           error: function(xhr, status, error){

@@ -222,9 +222,9 @@ public class MainWindow extends JFrame {
 				doc.appendChild(rootElement);
 				
 				// username element
-				Element usernameElement = doc.createElement("username");
+				Element usernameElement = doc.createElement("email");
 				rootElement.appendChild(usernameElement);
-				usernameElement.appendChild(doc.createTextNode("test username"));
+				usernameElement.appendChild(doc.createTextNode(email));
 				
 				// images element
 				Element imagesElement = doc.createElement("images");
@@ -270,7 +270,7 @@ public class MainWindow extends JFrame {
 				// Sign xml document
 				KeyStore keyStore = KeyStore.getInstance("JKS", "SUN");
 				BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(jksFilePath));
-				keyStore.load(inputStream, password.toCharArray());
+				keyStore.load(inputStream, new char[0]);
 				PrivateKey privateKey = (PrivateKey) keyStore.getKey(email, password.toCharArray());
 				Certificate certificate = keyStore.getCertificate(email);
 				

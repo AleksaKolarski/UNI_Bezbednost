@@ -32,7 +32,7 @@ public class JKS {
 	
 	public JKS(){
 		try {
-			keyStore = KeyStoreReader.read("data/glavni.jks", "sifra123");
+			keyStore = KeyStoreReader.read("data/glavni.jks", "sifra123".toCharArray());
 			certificate = keyStore.getCertificate("glavni sertifikat");
 			privateKey = (PrivateKey) keyStore.getKey("glavni sertifikat", "sifra123".toCharArray());
 			//publicKey = certificate.getPublicKey();

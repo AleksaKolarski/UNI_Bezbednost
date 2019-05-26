@@ -12,13 +12,12 @@ import java.security.cert.CertificateException;
 
 public class KeyStoreReader {
 	
-	public static KeyStore read(String file, String storePassword) {
+	public static KeyStore read(String file, char[] storePassword) {
 		
-		try {
-			KeyStore keyStore = KeyStore.getInstance("JKS", "SUN");
-			BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(file));
+		try (BufferedInputStream bufferedInputStream = new BufferedInputStream(new FileInputStream(file))) {
 			
-			keyStore.load(inputStream, storePassword.toCharArray());
+			KeyStore keyStore = KeyStore.getInstance("JKS", "SUN");
+			keyStore.load(bufferedInputStream, storePassword);
 			
 			return keyStore;
 			

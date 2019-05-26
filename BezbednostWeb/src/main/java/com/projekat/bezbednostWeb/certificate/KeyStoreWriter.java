@@ -13,14 +13,13 @@ public class KeyStoreWriter {
 	
 	public static void write(String email, String password, Certificate certificate, PrivateKey privateKey) {
 		
-		try {
+		try (FileOutputStream fOutputStream = new FileOutputStream("data/" + email + ".jks")) {
+			
 			KeyStore keyStore = KeyStore.getInstance("JKS");
-			
 			keyStore.load(null, password.toCharArray());
-			
 			keyStore.setKeyEntry(email, privateKey, password.toCharArray(), new Certificate[] {certificate});
+			keyStore.store(fOutputStream, new char[0]);
 			
-			keyStore.store(new FileOutputStream("data/" + email + ".jks"), password.toCharArray());
 		} catch (KeyStoreException e) {
 			e.printStackTrace();
 		} catch (NoSuchAlgorithmException e) {
