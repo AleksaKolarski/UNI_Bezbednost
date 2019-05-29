@@ -74,6 +74,11 @@ public class ZipChecker {
 							if(verifySignature(document, publicKey)) {
 								System.out.println("Dokument verifikovan");
 							}
+							else {
+								System.out.println("Dokument NIJE verifikovan");
+							}
+							
+							// proveriti HASH vrednosti slike (uporediti sa onim iz xml-a)
 							
 							break;
 						case "jpg":

@@ -28,6 +28,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import javax.imageio.ImageIO;
+import javax.security.cert.CertificateParsingException;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -141,7 +142,7 @@ public class MainWindow extends JFrame {
 					fileChooser.setDialogTitle("Choose picture folder");
 					fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 					fileChooser.resetChoosableFileFilters();
-					fileChooser.setCurrentDirectory(new java.io.File("."));
+					fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
 					
 					List<File> filesTMP = new ArrayList<>();
 					if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
@@ -191,7 +192,7 @@ public class MainWindow extends JFrame {
 			fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 			fileChooser.resetChoosableFileFilters();
 			fileChooser.setFileFilter(new FileNameExtensionFilter("Java key store files", "jks"));
-			fileChooser.setCurrentDirectory(new java.io.File("."));
+			fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
 			
 			if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
 				System.out.println("Sertifikat: " + fileChooser.getSelectedFile());
@@ -209,9 +210,16 @@ public class MainWindow extends JFrame {
 		public void actionPerformed(ActionEvent event) {
 			System.out.println("sign and compress");
 			
+			if(jksFilePath == null || jksFilePath.isEmpty()) {
+				System.out.println("Java key store not set.");
+				return;
+			}
+			
+			FileOutputStream fos;
+			ZipOutputStream zipOut = null;
 			try {
-				FileOutputStream fos = new FileOutputStream("compressed.zip");
-				ZipOutputStream zipOut = new ZipOutputStream(fos);
+				fos = new FileOutputStream("compressed.zip");
+				zipOut = new ZipOutputStream(fos);
 				
 				DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 				DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
@@ -274,6 +282,10 @@ public class MainWindow extends JFrame {
 				PrivateKey privateKey = (PrivateKey) keyStore.getKey(email, password.toCharArray());
 				Certificate certificate = keyStore.getCertificate(email);
 				
+				if(certificate == null) {
+					throw new CertificateParsingException("Could not load certificate by email: " + email);
+				}
+				
 				doc = signDocument(doc, privateKey, certificate);
 				
 				System.out.println("Signed document verification: " + verifyDocument(doc));
@@ -296,10 +308,16 @@ public class MainWindow extends JFrame {
 				zipOut.putNextEntry(new ZipEntry("contents.xml"));
 				zipOut.write(xmlBytes, 0, xmlBytes.length);
 				
-				zipOut.close();
-		        fos.close();
+				
 			} catch (Exception e) {
 				e.printStackTrace();
+			}
+			finally {
+				try {
+					zipOut.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}
