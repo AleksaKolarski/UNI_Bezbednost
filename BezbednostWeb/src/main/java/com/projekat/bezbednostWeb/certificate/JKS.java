@@ -32,7 +32,7 @@ public class JKS {
 	
 	public JKS(){
 		try {
-			keyStore = KeyStoreReader.read("data/glavni.jks", "sifra123".toCharArray());
+			keyStore = KeyStoreUtil.read("data/glavni.jks", "sifra123".toCharArray());
 			certificate = keyStore.getCertificate("glavni sertifikat");
 			privateKey = (PrivateKey) keyStore.getKey("glavni sertifikat", "sifra123".toCharArray());
 			//publicKey = certificate.getPublicKey();
@@ -64,7 +64,7 @@ public class JKS {
 		X500Name newName = nameBuilder.build();
 		Certificate newCertificate = CertificateGenerator.generate(subjectName, privateKey, newName, keyPair.getPublic(), BigInteger.valueOf(id.intValue()), startDate, endDate);
 		
-		KeyStoreWriter.write(email, password, newCertificate, keyPair.getPrivate());
+		KeyStoreUtil.write(email, password, newCertificate, keyPair.getPrivate());
 	}
 	
 	private KeyPair generateKeyPair() {

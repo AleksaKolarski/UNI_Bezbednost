@@ -1,5 +1,10 @@
 package com.projekat.bezbednostWeb.controller;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,7 +25,7 @@ public class ImageController {
 		
 		ZipChecker.check(file);
 		
-		/*
+		
 		try {
 			Path rootPath = Paths.get("data/img");
 			Path path = rootPath.resolve(file.getOriginalFilename());
@@ -30,7 +35,7 @@ public class ImageController {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		*/
+		
 		
 		return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 	}

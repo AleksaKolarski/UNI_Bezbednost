@@ -29,7 +29,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import com.projekat.bezbednostWeb.certificate.KeyStoreReader;
+import com.projekat.bezbednostWeb.certificate.KeyStoreUtil;
 
 public class ZipChecker {
 	
@@ -66,7 +66,7 @@ public class ZipChecker {
 							System.out.println("EMAIL: " + emailElement.getTextContent());
 							
 							// get public key from local certificate
-							KeyStore keyStore = KeyStoreReader.read("data/" + email + ".jks", new char[0]);
+							KeyStore keyStore = KeyStoreUtil.read("data/" + email + ".jks", new char[0]);
 							Certificate certificate = keyStore.getCertificate(email);
 							PublicKey publicKey = certificate.getPublicKey();
 							
