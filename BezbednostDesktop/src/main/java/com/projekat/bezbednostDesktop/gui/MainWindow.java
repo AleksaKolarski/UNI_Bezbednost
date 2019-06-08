@@ -256,6 +256,7 @@ public class MainWindow extends JFrame {
 				KeyStore keyStore = KeyStore.getInstance("JKS", "SUN");
 				BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(jksFilePath));
 				keyStore.load(inputStream, new char[0]);
+				inputStream.close();
 				PrivateKey privateKey = (PrivateKey) keyStore.getKey(email, password.toCharArray());
 				Certificate certificate = keyStore.getCertificate(email);
 				
