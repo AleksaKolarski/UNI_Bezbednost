@@ -14,15 +14,18 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.Security;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Date;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -39,9 +42,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JToolBar;
 import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
@@ -49,6 +51,13 @@ import javax.xml.transform.stream.StreamResult;
 import org.apache.commons.io.IOCase;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.apache.xml.security.exceptions.XMLSecurityException;
 import org.apache.xml.security.keys.KeyInfo;
 import org.apache.xml.security.keys.keyresolver.implementations.RSAKeyValueResolver;
@@ -57,10 +66,12 @@ import org.apache.xml.security.signature.XMLSignature;
 import org.apache.xml.security.transforms.Transforms;
 import org.apache.xml.security.utils.Constants;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+
+import com.projekat.bezbednostDesktop.xml.XmlGenerator;
+import com.projekat.bezbednostDesktop.xml.XmlGeneratorException;
 
 
 public class MainWindow extends JFrame {
@@ -70,8 +81,9 @@ public class MainWindow extends JFrame {
 	private JButton buttonBrowseFolder;
 	private JButton buttonBrowseJKS;
 	private JButton buttonSignAndCompress;
+	private JButton buttonUpload;
 	
-	JFileChooser fileChooser;
+	private JFileChooser fileChooser;
 	
 	private JScrollPane scroll;
 	private JPanel panel;
@@ -102,6 +114,7 @@ public class MainWindow extends JFrame {
 		buttonBrowseFolder = new JButton("Browse folder");
 		buttonBrowseJKS = new JButton("Browse JKS");
 		buttonSignAndCompress = new JButton("Sign and compress");
+		buttonUpload = new JButton("Upload");
 		
 		fileChooser = new JFileChooser();
 		fileChooser.setAcceptAllFileFilterUsed(false);
@@ -109,10 +122,12 @@ public class MainWindow extends JFrame {
 		buttonBrowseFolder.addActionListener(new BrowseFolderActionListener());
 		buttonBrowseJKS.addActionListener(new BrowseJKSActionListener());
 		buttonSignAndCompress.addActionListener(new SignAndCompressActionListener());
+		buttonUpload.addActionListener(new UploadActionListener());
 		
 		toolbar.add(buttonBrowseFolder);
 		toolbar.add(buttonBrowseJKS);
 		toolbar.add(buttonSignAndCompress);
+		toolbar.add(buttonUpload);
 		
 		add(toolbar, BorderLayout.NORTH);
 		
@@ -220,28 +235,11 @@ public class MainWindow extends JFrame {
 			try {
 				fos = new FileOutputStream("compressed.zip");
 				zipOut = new ZipOutputStream(fos);
+				    
 				
-				DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-				DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-				Document doc = dBuilder.newDocument();
-				         
-				// root element
-				Element rootElement = doc.createElement("RootElement");
-				doc.appendChild(rootElement);
+				XmlGenerator xmlGenerator = new XmlGenerator();
 				
-				// username element
-				Element usernameElement = doc.createElement("email");
-				rootElement.appendChild(usernameElement);
-				usernameElement.appendChild(doc.createTextNode(email));
-				
-				// images element
-				Element imagesElement = doc.createElement("images");
-				rootElement.appendChild(imagesElement);
-				
-				// date element
-				Element dateElement = doc.createElement("date");
-				rootElement.appendChild(dateElement);
-				dateElement.appendChild(doc.createTextNode(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())));
+				xmlGenerator.setEmail(email);
 				
 				for(File file: files) {
 					
@@ -260,18 +258,7 @@ public class MainWindow extends JFrame {
 		            zipOut.putNextEntry(zipEntry);
 		            zipOut.write(bytes, 0, bytes.length);
 		            
-		            // image element
-		            Element imageElement = doc.createElement("image");
-		            imagesElement.appendChild(imageElement);
-		            Attr imageNameAttr = doc.createAttribute("name");
-		            imageNameAttr.setValue(file.getName());
-		            imageElement.setAttributeNode(imageNameAttr);
-		            Attr imageSizeAttr = doc.createAttribute("size");
-		            imageSizeAttr.setValue(((Integer) bytes.length).toString());
-		            imageElement.setAttributeNode(imageSizeAttr);
-		            Attr imageHashAttr = doc.createAttribute("hash");
-		            imageHashAttr.setValue(hashString);
-		            imageElement.setAttributeNode(imageHashAttr);
+		            xmlGenerator.addImage(file.getName(), (Integer)bytes.length, hashString);
 				}
 				
 				
@@ -286,14 +273,16 @@ public class MainWindow extends JFrame {
 					throw new CertificateParsingException("Could not load certificate by email: " + email);
 				}
 				
-				doc = signDocument(doc, privateKey, certificate);
+				Document document = xmlGenerator.generate();
 				
-				System.out.println("Signed document verification: " + verifyDocument(doc));
+				document = signDocument(document, privateKey, certificate);
+				
+				System.out.println("Signed document verification: " + verifyDocument(document));
 				
 				// write the content into xml file
 				TransformerFactory transformerFactory = TransformerFactory.newInstance();
 				Transformer transformer = transformerFactory.newTransformer();
-				DOMSource source = new DOMSource(doc);
+				DOMSource source = new DOMSource(document);
 				//StreamResult result = new StreamResult(new FileOutputStream("test.xml")); // ako ocemo xml da ispisemo na disk a ne u zip direktno
 				ByteArrayOutputStream bo = new ByteArrayOutputStream();
 				StreamResult result = new StreamResult(bo);
@@ -309,7 +298,23 @@ public class MainWindow extends JFrame {
 				zipOut.write(xmlBytes, 0, xmlBytes.length);
 				
 				
-			} catch (Exception e) {
+			} catch (TransformerException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (XmlGeneratorException e) {
+				e.printStackTrace();
+			} catch (CertificateParsingException e) {
+				e.printStackTrace();
+			} catch (KeyStoreException e) {
+				e.printStackTrace();
+			} catch (NoSuchProviderException e) {
+				e.printStackTrace();
+			} catch (NoSuchAlgorithmException e) {
+				e.printStackTrace();
+			} catch (CertificateException e) {
+				e.printStackTrace();
+			} catch (UnrecoverableKeyException e) {
 				e.printStackTrace();
 			}
 			finally {
@@ -385,6 +390,33 @@ public class MainWindow extends JFrame {
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
+		}
+	}
+	
+	// Upload
+	class UploadActionListener implements ActionListener{
+		@Override
+		public void actionPerformed(ActionEvent arg0) {
+			try {
+				
+				HttpPost post = new HttpPost("https://localhost:8443/image/upload");
+				//post.setHeader("", "");
+				MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+				builder.addPart("file", new FileBody(new File("compressed.zip")));
+				post.setEntity(builder.build());
+				
+				HttpResponse response = HttpClients.createDefault().execute(post);
+				
+				int httpStatus = response.getStatusLine().getStatusCode();
+				String httpResponseMsg = EntityUtils.toString(response.getEntity(), "UTF-8");
+				
+			    System.out.println("HTTP " + httpStatus + " " + httpResponseMsg);
+			    
+			} catch (ClientProtocolException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 }

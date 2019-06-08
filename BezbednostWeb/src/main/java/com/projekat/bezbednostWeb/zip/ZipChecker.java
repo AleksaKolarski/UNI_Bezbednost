@@ -3,12 +3,17 @@ package com.projekat.bezbednostWeb.zip;
 import java.io.IOException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -18,6 +23,7 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.xml.security.keys.KeyInfo;
 import org.apache.xml.security.keys.keyresolver.implementations.RSAKeyValueResolver;
 import org.apache.xml.security.keys.keyresolver.implementations.X509CertificateResolver;
@@ -45,19 +51,23 @@ public class ZipChecker {
 		ZipFile zipFile = null;
 		try {			
 			zipFile = new ZipFile( new SeekableInMemoryByteChannel(multipartFile.getBytes()));
-			Enumeration<ZipArchiveEntry> zipEnum = zipFile.getEntries();			
+			Enumeration<ZipArchiveEntry> zipEnum = zipFile.getEntries();
+			
+			Map<String, String> files = new HashMap<String, String>();
+			Document document = null;
 			
 			while(zipEnum.hasMoreElements()) {
-				ZipArchiveEntry entry = zipEnum.nextElement();				
+				ZipArchiveEntry entry = zipEnum.nextElement();
 				try {
 					String extension = FilenameUtils.getExtension(entry.getName());
+					MessageDigest sha = MessageDigest.getInstance("SHA-256");
 					switch(extension) {
 						case "xml":
 							
 							DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 							dbf.setNamespaceAware(true);
 							DocumentBuilder db = dbf.newDocumentBuilder();
-							Document document = db.parse(zipFile.getInputStream(entry));
+							document = db.parse(zipFile.getInputStream(entry));
 							
 							// get email from xml
 							NodeList emailNode = document.getElementsByTagName("email");
@@ -78,11 +88,12 @@ public class ZipChecker {
 								System.out.println("Dokument NIJE verifikovan");
 							}
 							
-							// proveriti HASH vrednosti slike (uporediti sa onim iz xml-a)
-							
 							break;
 						case "jpg":
 						case "png":
+							byte[] bytes = IOUtils.toByteArray(zipFile.getInputStream(entry));
+							byte[] hashBytes = sha.digest(bytes);
+							files.put(entry.getName(), Base64.getEncoder().encodeToString(hashBytes));
 							break;
 					}
 					
@@ -92,7 +103,33 @@ public class ZipChecker {
 					e.printStackTrace();
 				} catch (KeyStoreException e) {
 					e.printStackTrace();
+				} catch (NoSuchAlgorithmException e) {
+					e.printStackTrace();
 				}
+			}
+			
+			// proci kroz fileList i uporediti sa ovim iz xml-a
+			NodeList imageNodes = document.getElementsByTagName("image");
+			
+			boolean good = true;
+			
+			for(int i = 0; i < imageNodes.getLength(); i++) {
+				Element imageElement = (Element) imageNodes.item(i);
+				String imageName = imageElement.getAttribute("name");
+				String imageHash = imageElement.getAttribute("hash");
+				System.out.println(imageName + " === " + imageHash);
+				
+				if(!imageHash.equals(files.get(imageName))) {
+					good = false;
+					break;
+				}
+			}
+			
+			if(good == true) {
+				System.out.println("OK BRT");
+			}
+			else {
+				System.out.println("NIJE OK BRT");
 			}
 			
 		} catch (IOException e) {
