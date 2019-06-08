@@ -86,6 +86,7 @@ public class MainWindow extends JFrame {
 	public String email;
 	public String password;
 	
+	
 	static {
 		Security.addProvider(new BouncyCastleProvider());
 		org.apache.xml.security.Init.init();
@@ -227,10 +228,10 @@ public class MainWindow extends JFrame {
 				fos = new FileOutputStream("compressed.zip");
 				zipOut = new ZipOutputStream(fos);
 				    
-				
 				XmlGenerator xmlGenerator = new XmlGenerator();
-				
 				xmlGenerator.setEmail(email);
+				
+				MessageDigest sha = MessageDigest.getInstance("SHA-256");
 				
 				for(File file: files) {
 					
@@ -240,7 +241,6 @@ public class MainWindow extends JFrame {
 					fis.close();
 					
 					// racunamo hash i enkodujemo u base64
-					MessageDigest sha = MessageDigest.getInstance("SHA-256");
 					byte[] hashBytes = sha.digest(bytes);
 					String hashString = Base64.getEncoder().encodeToString(hashBytes);
 					
@@ -251,7 +251,6 @@ public class MainWindow extends JFrame {
 		            
 		            xmlGenerator.addImage(file.getName(), (Integer)bytes.length, hashString);
 				}
-				
 				
 				// Sign xml document
 				KeyStore keyStore = KeyStore.getInstance("JKS", "SUN");
@@ -265,9 +264,7 @@ public class MainWindow extends JFrame {
 				}
 				
 				Document document = xmlGenerator.generate();
-				
 				document = XmlSigner.SignDocument(document, privateKey, certificate);
-				
 				System.out.println("Signed document verification: " + XmlSigner.VerifyDocument(document));
 				
 				// write the content into xml file
@@ -287,7 +284,6 @@ public class MainWindow extends JFrame {
 				byte[] xmlBytes = bo.toByteArray();
 				zipOut.putNextEntry(new ZipEntry("contents.xml"));
 				zipOut.write(xmlBytes, 0, xmlBytes.length);
-				
 				
 			} catch (TransformerException e) {
 				e.printStackTrace();
