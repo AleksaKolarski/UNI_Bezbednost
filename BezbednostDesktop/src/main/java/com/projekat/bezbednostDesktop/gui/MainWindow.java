@@ -23,7 +23,6 @@ import java.security.Security;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -58,21 +57,13 @@ import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-import org.apache.xml.security.exceptions.XMLSecurityException;
-import org.apache.xml.security.keys.KeyInfo;
-import org.apache.xml.security.keys.keyresolver.implementations.RSAKeyValueResolver;
-import org.apache.xml.security.keys.keyresolver.implementations.X509CertificateResolver;
-import org.apache.xml.security.signature.XMLSignature;
-import org.apache.xml.security.transforms.Transforms;
-import org.apache.xml.security.utils.Constants;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 
 import com.projekat.bezbednostDesktop.xml.XmlGenerator;
 import com.projekat.bezbednostDesktop.xml.XmlGeneratorException;
-
+import com.projekat.bezbednostDesktop.xml.XmlSigner;
+import com.projekat.bezbednostDesktop.xml.XmlSignerException;
 
 public class MainWindow extends JFrame {
 	private static final long serialVersionUID = 1L;
@@ -275,9 +266,9 @@ public class MainWindow extends JFrame {
 				
 				Document document = xmlGenerator.generate();
 				
-				document = signDocument(document, privateKey, certificate);
+				document = XmlSigner.SignDocument(document, privateKey, certificate);
 				
-				System.out.println("Signed document verification: " + verifyDocument(document));
+				System.out.println("Signed document verification: " + XmlSigner.VerifyDocument(document));
 				
 				// write the content into xml file
 				TransformerFactory transformerFactory = TransformerFactory.newInstance();
@@ -316,6 +307,8 @@ public class MainWindow extends JFrame {
 				e.printStackTrace();
 			} catch (UnrecoverableKeyException e) {
 				e.printStackTrace();
+			} catch (XmlSignerException e) {
+				e.printStackTrace();
 			}
 			finally {
 				try {
@@ -324,72 +317,6 @@ public class MainWindow extends JFrame {
 					e.printStackTrace();
 				}
 			}
-		}
-	}
-	
-	private Document signDocument(Document doc, PrivateKey privateKey, Certificate certificate) {
-		try {
-			Element rootElement = doc.getDocumentElement();
-				
-			XMLSignature xmlSignature;
-			xmlSignature = new XMLSignature(doc, null, XMLSignature.ALGO_ID_SIGNATURE_RSA_SHA1);
-			Transforms transforms = new Transforms(doc);
-			transforms.addTransform(Transforms.TRANSFORM_ENVELOPED_SIGNATURE);
-			transforms.addTransform(Transforms.TRANSFORM_C14N_WITH_COMMENTS);
-				
-			xmlSignature.addDocument("", transforms, Constants.ALGO_ID_DIGEST_SHA1);
-			xmlSignature.addKeyInfo(certificate.getPublicKey());
-			xmlSignature.addKeyInfo((X509Certificate) certificate);
-				
-			rootElement.appendChild(xmlSignature.getElement());
-				
-			xmlSignature.sign(privateKey);
-			return doc;
-		} catch (XMLSecurityException e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
-	
-	private boolean verifyDocument(Document doc) {
-		try {
-			//Pronalazi se prvi Signature element 
-			NodeList signatures = doc.getElementsByTagNameNS("http://www.w3.org/2000/09/xmldsig#", "Signature");
-			Element signatureEl = (Element) signatures.item(0);
-			
-			//kreira se signature objekat od elementa
-			XMLSignature signature = new XMLSignature(signatureEl, null);
-			
-			//preuzima se key info
-			KeyInfo keyInfo = signature.getKeyInfo();
-			
-			//ako postoji
-			if(keyInfo != null) {
-				//registruju se resolver-i za javni kljuc i sertifikat
-				keyInfo.registerInternalKeyResolver(new RSAKeyValueResolver());
-			    keyInfo.registerInternalKeyResolver(new X509CertificateResolver());
-			    
-			    //ako sadrzi sertifikat
-			    if(keyInfo.containsX509Data() && keyInfo.itemX509Data(0).containsCertificate()) { 
-			        Certificate cert = keyInfo.itemX509Data(0).itemCertificate(0).getX509Certificate();
-			        
-			        //ako postoji sertifikat, provera potpisa
-			        if(cert != null) 
-			        	return signature.checkSignatureValue((X509Certificate) cert);
-			        else {
-			        	return false;
-			        }
-			    }
-			    else {
-		        	return false;
-		        }
-			}
-			else {
-	        	return false;
-	        }
-		} catch (Exception e) {
-			e.printStackTrace();
-			return false;
 		}
 	}
 	
