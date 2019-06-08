@@ -36,54 +36,53 @@ public class XmlGenerator {
 	public Document generate() throws XmlGeneratorException {
 		
 		if(this.email == null || this.email.isEmpty()) {
-			throw new XmlGeneratorException("email not set");
+			throw new XmlGeneratorException("Email not set");
 		}
 		
 		try {
 			DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-			 DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-			 Document document = documentBuilder.newDocument();
+			DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+			Document document = documentBuilder.newDocument();
 			 
-			 // Root element
-			 Element rootElement = document.createElement("RootElement");
-			 document.appendChild(rootElement);
+			// Root element
+			Element rootElement = document.createElement("RootElement");
+			document.appendChild(rootElement);
 			 
-			 // Email element
-			 Element emailElement = document.createElement("email");
-			 rootElement.appendChild(emailElement);
-			 emailElement.appendChild(document.createTextNode(this.email));
+			// Email element
+			Element emailElement = document.createElement("email");
+			rootElement.appendChild(emailElement);
+			emailElement.appendChild(document.createTextNode(this.email));
 			 
-			 // Date element
-			 Element dateElement = document.createElement("date");
-			 rootElement.appendChild(dateElement);
-			 dateElement.appendChild(document.createTextNode(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())));
-			 
-			 // Images element
-			 Element imagesElement = document.createElement("images");
-			 rootElement.appendChild(imagesElement);
-			 
-			 for(XmlImage image: images) {
-				 
-				 // Image element
-				 Element imageElement = document.createElement("image");
-				 imagesElement.appendChild(imageElement);
-				 
-				 // Image name attribute
-				 Attr imageNameAttr = document.createAttribute("name");
-				 imageNameAttr.setValue(image.name);
-				 imageElement.setAttributeNode(imageNameAttr);
-				 
-				 // Image size attribute
-				 Attr imageSizeAttr = document.createAttribute("size");
-				 imageSizeAttr.setValue((image.size).toString());
-				 imageElement.setAttributeNode(imageSizeAttr);
-				 
-				 // Image hash attribute
-				 Attr imageHashAttr = document.createAttribute("hash");
-				 imageHashAttr.setValue(image.hash);
-				 imageElement.setAttributeNode(imageHashAttr);
+			// Date element
+			Element dateElement = document.createElement("date");
+			rootElement.appendChild(dateElement);
+			dateElement.appendChild(document.createTextNode(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())));
+			
+			// Images element
+			Element imagesElement = document.createElement("images");
+			rootElement.appendChild(imagesElement);
+			
+			for(XmlImage image: images) {
+				
+				// Image element
+				Element imageElement = document.createElement("image");
+				imagesElement.appendChild(imageElement);
+				
+				// Image name attribute
+				Attr imageNameAttr = document.createAttribute("name");
+				imageNameAttr.setValue(image.name);
+				imageElement.setAttributeNode(imageNameAttr);
+				
+				// Image size attribute
+				Attr imageSizeAttr = document.createAttribute("size");
+				imageSizeAttr.setValue((image.size).toString());
+				imageElement.setAttributeNode(imageSizeAttr);
+				
+				// Image hash attribute
+				Attr imageHashAttr = document.createAttribute("hash");
+				imageHashAttr.setValue(image.hash);
+				imageElement.setAttributeNode(imageHashAttr);
 			 }
-			 
 			 
 			 return document;
 		} catch (ParserConfigurationException e) {
