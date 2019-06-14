@@ -1,6 +1,7 @@
 package com.projekat.bezbednostWeb.zip;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.MessageDigest;
@@ -44,106 +45,150 @@ public class ZipChecker {
         org.apache.xml.security.Init.init();
 	}
 	
-	public static boolean check(MultipartFile multipartFile) {
+	
+	private MultipartFile multipartFile;
+	
+	private String email;
+	
+	public ZipChecker(MultipartFile multipartFile) {
+		this.multipartFile = multipartFile;
+	}
+	
+	public boolean check() {
 		
-		// unzip, find xml, get email from xml, check signature, find user with that email
+		boolean good = true;
 		
-		ZipFile zipFile = null;
-		try {			
-			zipFile = new ZipFile( new SeekableInMemoryByteChannel(multipartFile.getBytes()));
-			Enumeration<ZipArchiveEntry> zipEnum = zipFile.getEntries();
-			
-			Map<String, String> files = new HashMap<String, String>();
-			Document document = null;
-			
-			while(zipEnum.hasMoreElements()) {
-				ZipArchiveEntry entry = zipEnum.nextElement();
-				try {
-					String extension = FilenameUtils.getExtension(entry.getName());
-					MessageDigest sha = MessageDigest.getInstance("SHA-256");
-					switch(extension) {
-						case "xml":
-							
-							DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-							dbf.setNamespaceAware(true);
-							DocumentBuilder db = dbf.newDocumentBuilder();
-							document = db.parse(zipFile.getInputStream(entry));
-							
-							// get email from xml
-							NodeList emailNode = document.getElementsByTagName("email");
-							Element emailElement = (Element) emailNode.item(0);
-							String email = emailElement.getTextContent();
-							System.out.println("EMAIL: " + emailElement.getTextContent());
-							
-							// get public key from local certificate
-							KeyStore keyStore = KeyStoreUtil.read("data/" + email + ".jks", new char[0]);
-							Certificate certificate = keyStore.getCertificate(email);
-							PublicKey publicKey = certificate.getPublicKey();
-							
-							
-							if(verifySignature(document, publicKey)) {
-								System.out.println("Dokument verifikovan");
-							}
-							else {
-								System.out.println("Dokument NIJE verifikovan");
-							}
-							
-							break;
-						case "jpg":
-						case "png":
-							byte[] bytes = IOUtils.toByteArray(zipFile.getInputStream(entry));
-							byte[] hashBytes = sha.digest(bytes);
-							files.put(entry.getName(), Base64.getEncoder().encodeToString(hashBytes));
-							break;
-					}
-					
-				} catch (SAXException e) {
-					e.printStackTrace();
-				} catch (ParserConfigurationException e) {
-					e.printStackTrace();
-				} catch (KeyStoreException e) {
-					e.printStackTrace();
-				} catch (NoSuchAlgorithmException e) {
-					e.printStackTrace();
-				}
-			}
-			
-			// proci kroz fileList i uporediti sa ovim iz xml-a
-			NodeList imageNodes = document.getElementsByTagName("image");
-			
-			boolean good = true;
-			
-			for(int i = 0; i < imageNodes.getLength(); i++) {
-				Element imageElement = (Element) imageNodes.item(i);
-				String imageName = imageElement.getAttribute("name");
-				String imageHash = imageElement.getAttribute("hash");
-				System.out.println(imageName + " === " + imageHash);
-				
-				if(!imageHash.equals(files.get(imageName))) {
-					good = false;
+		ZipFile zipFile;
+		Document xmlDocument;
+		Map<String, InputStream> images;
+		
+		zipFile = null;
+		xmlDocument = null;
+		images = new HashMap<String, InputStream>();		
+		
+		// MultipartFile to ZipFile
+		try {
+			zipFile = new ZipFile(new SeekableInMemoryByteChannel(multipartFile.getBytes()));
+		}catch (IOException e) {
+			return false;
+		}
+		
+		// Ucitavamo fajlove iz zipa
+		Enumeration<ZipArchiveEntry> zipEnum = zipFile.getEntries();
+		while(zipEnum.hasMoreElements()) {
+			ZipArchiveEntry entry = zipEnum.nextElement();
+			String extension = FilenameUtils.getExtension(entry.getName());
+			try {
+				switch (extension) {
+				case "xml":
+					DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+					dbf.setNamespaceAware(true);
+					DocumentBuilder db = dbf.newDocumentBuilder();
+					xmlDocument = db.parse(zipFile.getInputStream(entry));
+					break;
+				case "jpg":
+				case "png":
+					images.put(entry.getName(), zipFile.getInputStream(entry));
+					break;
+				default:
 					break;
 				}
 			}
-			
-			if(good == true) {
-				System.out.println("OK BRT");
+			catch (IOException | ParserConfigurationException | SAXException e) {
+				e.printStackTrace();
+				good = false;
 			}
-			else {
-				System.out.println("NIJE OK BRT");
-			}
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		finally {
-			ZipFile.closeQuietly(zipFile);
 		}
 		
-		return false;
+		// Proveri xml potpis
+		// radi ovo samo ako je sve do sad dobro
+		if(good == true) {
+			if( ! checkXmlSignature(xmlDocument)) {
+				good = false;
+			}
+		}
+		
+		// Proveri pravi hash slike sa hash-om iz xml-a
+		// radi ovo samo ako je do sad sve dobro
+		if( good == true) {
+			if( ! checkImages(xmlDocument, images)) {
+				good = false;
+			}
+		}
+		
+		ZipFile.closeQuietly(zipFile);
+		return good;
 	}
 	
+	private boolean checkImages(Document document, Map<String, InputStream> imagesMap) {
+		
+		// get hash class instance
+		MessageDigest sha;
+		try {
+			sha = MessageDigest.getInstance("SHA-256");
+		} catch (NoSuchAlgorithmException e) {
+			System.out.println("Could not get MessageDigest(SHA-256) class instance. Could not verify hashes.");
+			e.printStackTrace();
+			return false;
+		}
+		
+		// for every image from xml, check hash of real file
+		NodeList imageNodes = document.getElementsByTagName("image");
+		for(int i = 0; i < imageNodes.getLength(); i++) {
+			Element imageElement = (Element) imageNodes.item(i);
+			String imageName = imageElement.getAttribute("name");
+			String xmlImageHash = imageElement.getAttribute("hash");
+			System.out.println(imageName + " === " + xmlImageHash);
+			
+			// calculate real hash from zip
+			byte[] bytes;
+			try {
+				InputStream tmpImageInputStream = imagesMap.get(imageName);	
+				if(tmpImageInputStream == null) {
+					throw new NullPointerException();
+				}
+				bytes = IOUtils.toByteArray(tmpImageInputStream);
+			} catch (IOException | NullPointerException e) {
+				System.out.println("Could not read file from Zip archive: " + imageName);
+				e.printStackTrace();
+				return false;
+			}
+			byte[] hashBytes = sha.digest(bytes);
+			String realHash = Base64.getEncoder().encodeToString(hashBytes);
+			
+			// compare xml hash and real hash
+			if( ! realHash.equals(xmlImageHash)) {
+				System.out.println("Hash not good. Real one is " + realHash);
+				return false;
+			}
+		}
+		return true;
+	}
 	
-	private static boolean verifySignature(Document doc, PublicKey realPublicKey) {
+	private boolean checkXmlSignature(Document document) {
+		// get email from xml
+		NodeList emailNode = document.getElementsByTagName("email");
+		Element emailElement = (Element) emailNode.item(0);
+		String email = emailElement.getTextContent();
+		System.out.println("EMAIL: " + emailElement.getTextContent());
+		this.email = emailElement.getTextContent();
+		
+		// get public key from local certificate
+		KeyStore keyStore = KeyStoreUtil.read("data/" + email + ".jks", new char[0]);
+		Certificate certificate;
+		try {
+			certificate = keyStore.getCertificate(email);
+		} catch (KeyStoreException e) {
+			System.out.println("Could not read certificate from keystore for user: " + email);
+			e.printStackTrace();
+			return false;
+		}
+		PublicKey publicKey = certificate.getPublicKey();
+		
+		return verifySignature(document, publicKey);
+	}	
+	
+	private boolean verifySignature(Document doc, PublicKey realPublicKey) {
 		try {
 			//Pronalazi se prvi Signature element 
 			NodeList signatures = doc.getElementsByTagNameNS("http://www.w3.org/2000/09/xmldsig#", "Signature");
@@ -182,5 +227,9 @@ public class ZipChecker {
 			e.printStackTrace();
 			return false;
 		}
+	}
+
+	public String getEmail() {
+		return this.email;
 	}
 }
