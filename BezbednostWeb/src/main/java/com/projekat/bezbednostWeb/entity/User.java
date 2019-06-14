@@ -1,6 +1,7 @@
 package com.projekat.bezbednostWeb.entity;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -13,6 +14,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import org.springframework.security.core.GrantedAuthority;
@@ -44,6 +46,9 @@ public class User implements UserDetails {
 	@ManyToMany(cascade = {CascadeType.MERGE, CascadeType.MERGE}, fetch = FetchType.EAGER)
 	@JoinTable(name = "users_roles", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"))
 	private Set<Role> roles;
+	
+	@OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
+	private List<ImagePackage> imagePackages;
 
 	
 	public User() {}
@@ -97,6 +102,14 @@ public class User implements UserDetails {
 		this.roles = roles;
 	}
 	
+	public List<ImagePackage> getImagePackages() {
+		return imagePackages;
+	}
+
+	public void setImagePackages(List<ImagePackage> imagePackages) {
+		this.imagePackages = imagePackages;
+	}
+
 	public boolean getIsAdmin() {
 		for(Role role: roles) {
 			if(role.getName().equals("ROLE_ADMIN")) {

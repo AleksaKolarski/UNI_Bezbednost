@@ -2,15 +2,19 @@
 var button_download_certificate;
 var button_browse_images;
 var button_upload_images;
+var div_main;
 
 $(document).ready(function(e){
 
   button_download_certificate = $('#id-button-certificate');
   button_browse_images = $('#id-button-browse-images');
-  button_upload_images = $('#id-button-upload-images');
+	button_upload_images = $('#id-button-upload-images');
+	div_main = $('#id-div-main');
 
   button_download_certificate.on('click', certificate_download);
-  button_upload_images.on('click', upload_images);
+	button_upload_images.on('click', upload_images);
+	
+	fill_main_div();
 });
 
 function upload_images(){
@@ -50,4 +54,19 @@ function certificate_download(){
 		}
 	};
 	xhr.send();
+}
+
+function fill_main_div(){
+	customAjax({
+		method: 'GET',
+		url: '/user/currentUser',
+		success: function(user, status, xhr){
+			var images = user.imagePackages;
+			images.forEach(image => {
+				var html = '<div>'+ image +'</div>';
+				div_main.append(html);
+				console.log(html);
+			});
+    }
+	});
 }
