@@ -324,7 +324,7 @@ public class MainWindow extends JFrame {
 			try {
 				
 				HttpPost post = new HttpPost("https://localhost:8443/image/upload");
-				//post.setHeader("", "");
+				//post.setHeader("", ""); // ako koristimo jwt na primer moze se ubaciti
 				MultipartEntityBuilder builder = MultipartEntityBuilder.create();
 				builder.addPart("file", new FileBody(new File("compressed.zip")));
 				post.setEntity(builder.build());
