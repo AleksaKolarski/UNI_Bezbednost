@@ -1,5 +1,37 @@
 @mixin index{
   #id-body-index{
     
+    #id-div-main{
+
+      .class-zip-card-wrapper{
+        padding: 5px;
+
+        .class-zip-card{
+          padding: 0px;
+          text-align: center;
+          border: 1px solid black;
+          //margin: 5px;
+  
+          .class-div-datetime{
+            margin: 5px;
+            p{
+              margin: 0px;
+            }
+          }
+  
+          .class-div-links{
+            margin: 5px;
+  
+            p{
+              display: inline-block;
+              margin: 0px;
+            }
+            a{
+              margin: 5px;
+            }
+          }
+        }
+      }
+    }
   }
 }

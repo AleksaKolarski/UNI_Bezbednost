@@ -10,8 +10,11 @@ import java.security.PublicKey;
 import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,6 +34,7 @@ import org.apache.xml.security.keys.keyresolver.implementations.X509CertificateR
 import org.apache.xml.security.signature.XMLSignature;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.springframework.web.multipart.MultipartFile;
+import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -49,13 +53,15 @@ public class ZipChecker {
 	private MultipartFile multipartFile;
 	
 	private String email;
+	private Date date;
+	
 	
 	public ZipChecker(MultipartFile multipartFile) {
 		this.multipartFile = multipartFile;
 	}
 	
+	
 	public boolean check() {
-		
 		boolean good = true;
 		
 		ZipFile zipFile;
@@ -98,6 +104,16 @@ public class ZipChecker {
 				e.printStackTrace();
 				good = false;
 			}
+		}
+		
+		NodeList dateNode = xmlDocument.getElementsByTagName("date");
+		Element dateElement = (Element) dateNode.item(0);
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+		try {
+			this.date = formatter.parse(dateElement.getTextContent());
+		} catch (DOMException | ParseException e) {
+			e.printStackTrace();
+			good = false;
 		}
 		
 		// Proveri xml potpis
@@ -231,5 +247,9 @@ public class ZipChecker {
 
 	public String getEmail() {
 		return this.email;
+	}
+	
+	public Date getDate() {
+		return this.date;
 	}
 }

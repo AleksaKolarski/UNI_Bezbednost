@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class BezbednostWebApplication {
 
 	public static void main(String[] args) {
+		//CryptoHelperAES.generateKey();
 		SpringApplication.run(BezbednostWebApplication.class, args);
 	}
 

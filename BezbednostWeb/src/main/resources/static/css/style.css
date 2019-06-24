@@ -53,4 +53,29 @@
   padding-bottom: 20px;
 }
 
+#id-body-index #id-div-main .class-zip-card-wrapper {
+  padding: 5px;
+}
+#id-body-index #id-div-main .class-zip-card-wrapper .class-zip-card {
+  padding: 0px;
+  text-align: center;
+  border: 1px solid black;
+}
+#id-body-index #id-div-main .class-zip-card-wrapper .class-zip-card .class-div-datetime {
+  margin: 5px;
+}
+#id-body-index #id-div-main .class-zip-card-wrapper .class-zip-card .class-div-datetime p {
+  margin: 0px;
+}
+#id-body-index #id-div-main .class-zip-card-wrapper .class-zip-card .class-div-links {
+  margin: 5px;
+}
+#id-body-index #id-div-main .class-zip-card-wrapper .class-zip-card .class-div-links p {
+  display: inline-block;
+  margin: 0px;
+}
+#id-body-index #id-div-main .class-zip-card-wrapper .class-zip-card .class-div-links a {
+  margin: 5px;
+}
+
 /*# sourceMappingURL=style.css.map */

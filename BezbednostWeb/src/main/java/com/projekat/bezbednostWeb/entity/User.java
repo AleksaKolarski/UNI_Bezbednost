@@ -48,7 +48,7 @@ public class User implements UserDetails {
 	private Set<Role> roles;
 	
 	@OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
-	private List<ImagePackage> imagePackages;
+	private List<Zip> zipList;
 
 	
 	public User() {}
@@ -102,12 +102,12 @@ public class User implements UserDetails {
 		this.roles = roles;
 	}
 	
-	public List<ImagePackage> getImagePackages() {
-		return imagePackages;
+	public List<Zip> getZipList() {
+		return zipList;
 	}
 
-	public void setImagePackages(List<ImagePackage> imagePackages) {
-		this.imagePackages = imagePackages;
+	public void setZipList(List<Zip> zipList) {
+		this.zipList = zipList;
 	}
 
 	public boolean getIsAdmin() {

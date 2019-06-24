@@ -5,7 +5,6 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
-import com.projekat.bezbednostWeb.entity.ImagePackage;
 import com.projekat.bezbednostWeb.entity.User;
 
 public class UserDTO {
@@ -15,9 +14,7 @@ public class UserDTO {
 	
 	@JsonProperty(access = Access.WRITE_ONLY)
 	private String password;
-	
-	private List<Integer> imagePackages;
-	
+		
 	//private String certificate;
 	private Boolean active;
 	private Boolean admin;
@@ -28,10 +25,6 @@ public class UserDTO {
 	public UserDTO(User user) {
 		id = user.getId();
 		email = user.getEmail();
-		imagePackages = new ArrayList<>();
-		for(ImagePackage imagePackage: user.getImagePackages()) {
-			imagePackages.add(imagePackage.getId());
-		}
 		active = user.getActive();
 		admin = user.checkRole("ROLE_ADMIN");
 	}
@@ -68,14 +61,6 @@ public class UserDTO {
 
 	public void setPassword(String password) {
 		this.password = password;
-	}
-
-	public List<Integer> getImagePackages() {
-		return imagePackages;
-	}
-
-	public void setImagePackages(List<Integer> imagePackages) {
-		this.imagePackages = imagePackages;
 	}
 
 	public Boolean getActive() {

@@ -11,7 +11,7 @@ $(document).ready(function(e){
 	button_upload_images = $('#id-button-upload-images');
 	div_main = $('#id-div-main');
 
-  button_download_certificate.on('click', certificate_download);
+  button_download_certificate.on('click', function(){file_download('/certificate/download');});
 	button_upload_images.on('click', upload_images);
 	
 	fill_main_div();
@@ -32,40 +32,33 @@ function upload_images(){
 		contentType: false, 
 		processData: false,
 		success: function(data, status, xhr){
-
+			location.reload();
 		}
 	});
-}
-
-function certificate_download(){
-	var xhr = new XMLHttpRequest();
-	xhr.open('GET', "/certificate/download", true);
-	xhr.setRequestHeader('Authorization', 'Bearer ' + localStorage.getItem('jwt'));
-	xhr.responseType = 'blob';
-	xhr.onload = function(e) {
-		if (this.status == 200) {
-			var blob = this.response;
-			var a = document.createElement('a');
-			var url = window.URL.createObjectURL(blob);
-			a.href = url;
-			a.download = xhr.getResponseHeader('filename');
-			a.click();
-			window.URL.revokeObjectURL(url);
-		}
-	};
-	xhr.send();
 }
 
 function fill_main_div(){
 	customAjax({
 		method: 'GET',
-		url: '/user/currentUser',
-		success: function(user, status, xhr){
-			var images = user.imagePackages;
-			images.forEach(image => {
-				var html = '<div>'+ image +'</div>';
+		url: '/image/allFromCurrentUser',
+		success: function(zips, status, xhr){
+			zips.forEach(zip => {
+				var html = '<div class="class-zip-card-wrapper col-lg-2 col-md-4 col-sm-12">' + 
+											'<div class="class-zip-card">' + 
+												'<h4>'+ zip.id +'</h4>' + 
+												'<div class="class-div-datetime">' + 
+													'<p>'+ zip.date +'</p>' + 
+													'<p>'+ zip.time +'</p>' + 
+												'</div>' + 
+												'<div class="class-div-links">' + 
+													'<a id="id-download-zip-' + zip.id +'" href="#"><p>download</p></a>' + 
+													//'<a href="/zip.html?id='+ zip.id +'"><p>show</p></a>' + 
+												'</div>' + 
+											'</div>' + 
+      							'</div>';
 				div_main.append(html);
-				console.log(html);
+				//na link za download nakaciti funkciju download
+				$('#id-download-zip-' + zip.id).on('click', function(){file_download('/image/download/' + zip.id);});
 			});
     }
 	});

@@ -23,7 +23,7 @@ public class CertificateController {
 	@Autowired
 	private UserService userService;
 
-	// Download
+	
 	@GetMapping("/download")
 	@PreAuthorize("hasRole('REGULAR')")
 	public ResponseEntity<byte[]> download(){
