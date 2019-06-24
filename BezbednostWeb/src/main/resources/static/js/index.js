@@ -52,7 +52,7 @@ function fill_main_div(){
 												'</div>' + 
 												'<div class="class-div-links">' + 
 													'<a id="id-download-zip-' + zip.id +'" href="#"><p>download</p></a>' + 
-													//'<a href="/zip.html?id='+ zip.id +'"><p>show</p></a>' + 
+													//'<a href="/zip.html?id='+ zip.id +'"><p>show</p></a>' + // link za stranicu na kojoj prikazujemo slike iz zipa
 												'</div>' + 
 											'</div>' + 
       							'</div>';
