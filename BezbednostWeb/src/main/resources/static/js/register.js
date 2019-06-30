@@ -26,7 +26,7 @@ $(document).ready(function(e){
           url: '/user/register',
           data: { 'email': email, 'password': password },
           success: function(data, status, xhr){
-            
+            window.location.href = '/login.html';
           },
           error: function(xhr, status, error){
             
